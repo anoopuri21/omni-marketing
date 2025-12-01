@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { Campaign } from "@/types/models";
 import { CampaignsForm } from "./campaigns-form";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const STATUS_LABELS: Record<Campaign["status"], string> = {
   draft: "Draft",
@@ -174,7 +175,7 @@ export function CampaignsSection() {
       setWhatsAppBroadcastId(null);
     }
   };
-  
+
   return (
     <section className="space-y-4">
       <div>
@@ -198,7 +199,7 @@ export function CampaignsSection() {
           Your campaigns
         </h4>
 
-                {sendError && (
+        {sendError && (
           <p className="mb-1 text-sm text-red-600">
             {sendError}
           </p>
@@ -249,7 +250,17 @@ export function CampaignsSection() {
               >
                 <div>
                   <div className="font-medium">
-                    {campaign.name}
+                    <Link
+                      href={`/campaigns/${campaign.id}`}
+                      className="hover:underline"
+                    >
+                      {campaign.name}
+                    </Link>
+                    {campaign.channel === "email" && (
+                      <span className="ml-2 text-[11px] uppercase text-muted-foreground">
+                        View details
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground space-x-2">
                     <span className="uppercase">
@@ -262,7 +273,7 @@ export function CampaignsSection() {
                   </div>
                 </div>
 
-                                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   {campaign.channel === "email" && (
                     <div className="flex flex-col items-end gap-1">
                       <Button

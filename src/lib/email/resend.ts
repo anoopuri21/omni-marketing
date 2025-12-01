@@ -24,7 +24,6 @@ export async function sendBasicEmail({
   console.log("Resend send result:", { data, error });
 
   if (error) {
-    // Include as much info as possible for development
     throw new Error(
       typeof error === "string"
         ? error
@@ -32,5 +31,5 @@ export async function sendBasicEmail({
     );
   }
 
-  return data;
+  return data; // data?.id is the provider message id
 }

@@ -7,12 +7,11 @@ const client = twilio(
 );
 
 type SendWhatsAppArgs = {
-  to: string;   // in E.164, e.g. +49123456789
+  to: string;   // E.164, e.g. +49123456789
   body: string;
 };
 
 export async function sendWhatsAppMessage({ to, body }: SendWhatsAppArgs) {
-  // Twilio requires the whatsapp: prefix on both from and to
   const from = serverEnv.TWILIO_WHATSAPP_FROM;
 
   const toWithPrefix = to.startsWith("whatsapp:")
@@ -25,5 +24,5 @@ export async function sendWhatsAppMessage({ to, body }: SendWhatsAppArgs) {
     body,
   });
 
-  return message.sid;
+  return message.sid; // provider message id
 }

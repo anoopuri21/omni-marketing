@@ -1,94 +1,76 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+
 import { supabaseBrowserClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SignInForm } from "@/components/auth/sign-in-form";
 
 export default function SignInPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+  useEffect(() => {
+    let cancelled = false;
 
-    try {
-      const { error } =
-        await supabaseBrowserClient.auth.signInWithPassword({
-          email,
-          password,
-        });
+    async function checkSession() {
+      try {
+        const { data } =
+          await supabaseBrowserClient.auth.getSession();
 
-      if (error) {
-        setError(error.message);
-        return;
+        if (cancelled) return;
+
+        if (data.session) {
+          // Already logged in → go to dashboard
+          router.replace("/dashboard");
+        } else {
+          setChecking(false);
+        }
+      } catch (err) {
+        console.error("Error checking session on sign-in:", err);
+        if (!cancelled) {
+          setChecking(false);
+        }
       }
-
-      router.push("/dashboard");
-    } catch (err) {
-      console.error("Sign-in error:", err);
-      setError("Unexpected error. Please try again.");
-    } finally {
-      setLoading(false);
     }
-  };
+
+    checkSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  if (checking) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">
+          Checking session...
+        </p>
+      </main>
+    );
+  }
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
+    <main className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-md space-y-6 p-4">
-        <h1 className="text-2xl font-semibold text-center">
-          Sign in
-        </h1>
+        <div className="space-y-2 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Welcome back
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Sign in to manage your campaigns.
+          </p>
+        </div>
 
-        <form onSubmit={handleSignIn} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Email</label>
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Password</label>
-            <Input
-              type="password"
-              placeholder="••••••••"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
-          )}
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
+        <SignInForm />
 
         <p className="text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
-          <a href="/sign-up" className="underline">
+          <Link href="/sign-up" className="underline">
             Create one
-          </a>
+          </Link>
         </p>
       </div>
     </main>

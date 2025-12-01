@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendBasicEmail } from "@/lib/email/resend";
+import { logMessage } from "@/lib/logging/message-logs";
 
 function getCampaignIdFromUrl(req: NextRequest): string | null {
   const url = new URL(req.url);
@@ -89,10 +90,22 @@ export async function POST(req: NextRequest) {
     `This is a test email for campaign "${campaign.name}".`;
 
   try {
-    await sendBasicEmail({
+    const data = await sendBasicEmail({
       to,
       subject,
       text: body,
+    });
+
+    await logMessage({
+      supabase,
+      workspaceId: campaign.workspace_id,
+      userId: user.id,
+      channel: "email",
+      provider: "resend",
+      status: "sent",
+      providerMessageId: (data as any)?.id ?? null,
+      campaignId: campaign.id,
+      contactId: null,
     });
 
     // Optionally mark campaign as sent
@@ -111,6 +124,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Error sending campaign test email:", err);
+
+    await logMessage({
+      supabase,
+      workspaceId: campaign.workspace_id,
+      userId: user.id,
+      channel: "email",
+      provider: "resend",
+      status: "failed",
+      providerMessageId: null,
+      campaignId: campaign.id,
+      contactId: null,
+      errorMessage:
+        err instanceof Error ? err.message : "Unknown error",
+    });
+
     return NextResponse.json(
       {
         message:
@@ -121,4 +149,5 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+
 }

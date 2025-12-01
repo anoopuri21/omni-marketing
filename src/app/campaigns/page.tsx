@@ -5,22 +5,19 @@ import { useRouter } from "next/navigation";
 
 import { supabaseBrowserClient } from "@/lib/supabase/client";
 import { AppShell } from "@/components/layout/app-shell";
-import { OverviewCards } from "@/components/dashboard/overview-cards";
-import { EngagementChart } from "@/components/dashboard/engagement-chart";
-import { ActivityTable } from "@/components/dashboard/activity-table";
-import { EmailTestSection } from "@/components/marketing/email-test-section";
-import { WhatsAppTestSection } from "@/components/marketing/whatsapp-test-section";
+import { CampaignsSection } from "@/components/marketing/campaigns-section";
 
 type Session =
   | Awaited<
-    ReturnType<typeof supabaseBrowserClient.auth.getSession>
-  >["data"]["session"]
+      ReturnType<typeof supabaseBrowserClient.auth.getSession>
+    >["data"]["session"]
   | null;
 
-export default function DashboardPage() {
+export default function CampaignsPage() {
   const router = useRouter();
   const [session, setSession] = useState<Session>(null);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -58,28 +55,19 @@ export default function DashboardPage() {
 
   if (loading || !session) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950">
-        <p className="text-sm text-slate-400">
-          Loading dashboard...
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">
+          Loading campaigns...
         </p>
       </main>
     );
   }
+const userEmail = session.user.email ?? null;
 
-  const userEmail = session.user.email ?? null;
-  return (
-    <AppShell title="Dashboard" userEmail={userEmail}>
-      <OverviewCards />
-      <EngagementChart />
+return (
+  <AppShell title="Campaigns" userEmail={userEmail}>
+    <CampaignsSection />
+  </AppShell>
+);
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)]">
-        <ActivityTable />
-        <div className="space-y-4">
-          <EmailTestSection />
-          <WhatsAppTestSection />
-        </div>
-      </div>
-    </AppShell>
-
-  );
 }

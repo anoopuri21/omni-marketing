@@ -37,3 +37,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 
 ## In the openai.ts file just uncomment code and remove current code if, want to call the real OpenAI API.
+
+## Resend still restricts you to sending to your own email until you verify a domain.
+

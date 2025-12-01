@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/twilio";
+import { ensureDefaultWorkspace } from "@/lib/supabase/workspaces";
+import { logMessage } from "@/lib/logging/message-logs";
 
 const bodySchema = z.object({
   to: z
@@ -51,12 +53,44 @@ export async function POST(req: NextRequest) {
   }
 
   const { to, message } = parsed.data;
+  const workspaceId = await ensureDefaultWorkspace(supabase);
 
-  try {
-    const sid = await sendWhatsAppMessage({ to, body: message });
+    try {
+    const sid = await sendWhatsAppMessage({
+      to,
+      body: message,
+    });
+
+    await logMessage({
+      supabase,
+      workspaceId,
+      userId: user.id,
+      channel: "whatsapp",
+      provider: "twilio",
+      status: "sent",
+      providerMessageId: sid,
+      campaignId: null,
+      contactId: null,
+    });
+
     return NextResponse.json({ success: true, sid });
   } catch (err) {
     console.error("WhatsApp send error:", err);
+
+    await logMessage({
+      supabase,
+      workspaceId,
+      userId: user.id,
+      channel: "whatsapp",
+      provider: "twilio",
+      status: "failed",
+      providerMessageId: null,
+      campaignId: null,
+      contactId: null,
+      errorMessage:
+        err instanceof Error ? err.message : "Unknown error",
+    });
+
     return NextResponse.json(
       {
         message:

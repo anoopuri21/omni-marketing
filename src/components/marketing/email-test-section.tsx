@@ -59,10 +59,10 @@ export function EmailTestSection() {
         className="space-y-3 rounded-lg border bg-card p-4"
       >
         <div className="space-y-1">
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-muted-foreground">
             To (email)
           </label>
-          <Input
+          <Input className="text-muted-foreground"
             type="email"
             placeholder="you@example.com"
             autoComplete="email"
@@ -73,10 +73,10 @@ export function EmailTestSection() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-muted-foreground">
             Subject
           </label>
-          <Input
+          <Input className="text-muted-foreground"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             required
@@ -84,11 +84,11 @@ export function EmailTestSection() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-muted-foreground">
             Message
           </label>
           <textarea
-            className="min-h-[120px] w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="min-h-[120px] w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-muted-foreground"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             required

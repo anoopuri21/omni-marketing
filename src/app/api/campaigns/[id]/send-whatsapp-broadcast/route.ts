@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/twilio";
+import { logMessage } from "@/lib/logging/message-logs";
 
 function getCampaignIdFromUrl(req: NextRequest): string | null {
   const url = new URL(req.url);
@@ -118,8 +119,21 @@ export async function POST(req: NextRequest) {
         ? `Hi ${name},\n\n${baseBody}`
         : baseBody;
 
-    try {
-      await sendWhatsAppMessage({ to, body });
+        try {
+      const sid = await sendWhatsAppMessage({ to, body });
+
+      await logMessage({
+        supabase,
+        workspaceId: campaign.workspace_id,
+        userId: user.id,
+        channel: "whatsapp",
+        provider: "twilio",
+        status: "sent",
+        providerMessageId: sid,
+        campaignId: campaign.id,
+        contactId: contact.id,
+      });
+
       sent++;
     } catch (err) {
       failed++;
@@ -129,6 +143,23 @@ export async function POST(req: NextRequest) {
         to,
         err
       );
+
+      await logMessage({
+        supabase,
+        workspaceId: campaign.workspace_id,
+        userId: user.id,
+        channel: "whatsapp",
+        provider: "twilio",
+        status: "failed",
+        providerMessageId: null,
+        campaignId: campaign.id,
+        contactId: contact.id,
+        errorMessage:
+          err instanceof Error
+            ? err.message
+            : "Unknown error",
+      });
+
       errors.push({
         phone: to,
         message:

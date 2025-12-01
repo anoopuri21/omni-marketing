@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendBasicEmail } from "@/lib/email/resend";
+import { ensureDefaultWorkspace } from "@/lib/supabase/workspaces";
+import { logMessage } from "@/lib/logging/message-logs";
 
 const bodySchema = z.object({
   to: z.string().email("Invalid recipient email."),
@@ -45,13 +47,48 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { to, subject, message } = parsed.data;
+    const { to, subject, message } = parsed.data;
+
+  // Resolve workspace so logs are associated
+  const workspaceId = await ensureDefaultWorkspace(supabase);
 
   try {
-    await sendBasicEmail({ to, subject, text: message });
+    const data = await sendBasicEmail({
+      to,
+      subject,
+      text: message,
+    });
+
+    await logMessage({
+      supabase,
+      workspaceId,
+      userId: user.id,
+      channel: "email",
+      provider: "resend",
+      status: "sent",
+      providerMessageId: (data as any)?.id ?? null,
+      campaignId: null,
+      contactId: null,
+    });
+
     return NextResponse.json({ success: true });
-    } catch (err) {
+  } catch (err) {
     console.error("Error sending email:", err);
+
+    await logMessage({
+      supabase,
+      workspaceId,
+      userId: user.id,
+      channel: "email",
+      provider: "resend",
+      status: "failed",
+      providerMessageId: null,
+      campaignId: null,
+      contactId: null,
+      errorMessage:
+        err instanceof Error ? err.message : "Unknown error",
+    });
+
     return NextResponse.json(
       {
         message:
